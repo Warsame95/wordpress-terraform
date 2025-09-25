@@ -9,7 +9,7 @@ resource "aws_vpc" "main" {
 
 # subnets
 resource "aws_subnet" "public-subnet-a" {
-  vpc_id     = "vpc-03a229ed652f8cfbc"
+  vpc_id     = var.vpc_id
   cidr_block = "10.0.1.0/24"
 
   tags = {
@@ -18,7 +18,7 @@ resource "aws_subnet" "public-subnet-a" {
 }
 
 resource "aws_subnet" "private-subnet-a" {
-    vpc_id = "vpc-03a229ed652f8cfbc"
+    vpc_id = var.vpc_id
     cidr_block = "10.0.2.0/24"
 
     tags = {
@@ -30,7 +30,7 @@ resource "aws_subnet" "private-subnet-a" {
 # Internet gateway
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = "vpc-03a229ed652f8cfbc"
+  vpc_id = var.vpc_id
 
   tags = {
     Name = "wordpress-igw"
@@ -59,8 +59,8 @@ locals {
 }
 
 resource "aws_instance" "wordpress_ec2" {
-    ami = "ami-046c2381f11878233"
-    instance_type = "t2.micro"
+    ami = var.instance_id
+    instance_type = var.instance_type
 
     user_data = file(local.userdata_file)
 
@@ -83,18 +83,18 @@ resource "aws_security_group" "wordpress_sg" {
   }
 
    ingress {
-    from_port        = 22
-    to_port          = 22
+    from_port        = var.ssh_port
+    to_port          = var.ssh_port
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = [var.http_ssh]
     
   }
 
    ingress {
-    from_port        = 80
-    to_port          = 80
+    from_port        = var.http_port
+    to_port          = var.http_port
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = [var.http_cidr]
     
   }
 
@@ -102,11 +102,11 @@ resource "aws_security_group" "wordpress_sg" {
 
 
 resource "aws_route_table" "pvt_rtb" {
-    vpc_id = "vpc-03a229ed652f8cfbc"
+    vpc_id = var.vpc_id
 
     route {
         cidr_block = "0.0.0.0/0"
-        nat_gateway_id = "nat-060470cdcf3c4c021"
+        nat_gateway_id = var.nat_gateway_id
     }
 
     tags = {
@@ -115,12 +115,12 @@ resource "aws_route_table" "pvt_rtb" {
 }
 
 resource "aws_route_table" "pub_rtb" {
-    vpc_id = "vpc-03a229ed652f8cfbc"
+    vpc_id = var.vpc_id
 
 
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "igw-091d396bd25ceced5"
+        gateway_id = var.igw_gateway_id
     }
 
     tags = {
